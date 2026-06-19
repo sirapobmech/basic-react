@@ -1,0 +1,6 @@
+services:
+  app:
+    build: .          # build จาก Dockerfile ใน folder นี้
+    ports:
+      - "8080:80"     # เครื่องเรา:8080 → container:80
+    restart: unless-stopped  # restart อัตโนมัติถ้า crash
