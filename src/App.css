@@ -157,6 +157,15 @@
   background: #1e2535;
 }
 
+.sub-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #7c8fac;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 20px 0 10px;
+}
+
 /* Code Block */
 .code-block {
   background: #131720;

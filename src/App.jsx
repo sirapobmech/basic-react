@@ -12,6 +12,9 @@ import UseReducerPage from './pages/UseReducerPage'
 import CustomHooksPage from './pages/CustomHooksPage'
 import React19Page from './pages/React19Page'
 import InterviewQAPage from './pages/InterviewQAPage'
+import DockerPage from './pages/DockerPage'
+import TypeScriptPage from './pages/TypeScriptPage'
+import ArrayPage from './pages/ArrayPage'
 
 const navItems = [
   { id: 'home', label: 'หน้าหลัก', icon: '🏠' },
@@ -27,6 +30,12 @@ const navItems = [
   { section: 'Advanced' },
   { id: 'customhooks', label: 'Custom Hooks', icon: '🪝' },
   { id: 'react19', label: 'React 19 Features', icon: '🚀' },
+  { section: 'JavaScript' },
+  { id: 'array', label: 'Array Methods', icon: '📋' },
+  { section: 'TypeScript' },
+  { id: 'typescript', label: 'TypeScript', icon: '📘' },
+  { section: 'DevOps' },
+  { id: 'docker', label: 'Docker', icon: '🐳' },
   { section: 'สัมภาษณ์' },
   { id: 'interview', label: 'Interview Q&A', icon: '❓' },
 ]
@@ -42,6 +51,9 @@ const pages = {
   usereducer: UseReducerPage,
   customhooks: CustomHooksPage,
   react19: React19Page,
+  array: ArrayPage,
+  typescript: TypeScriptPage,
+  docker: DockerPage,
   interview: InterviewQAPage,
 }
 

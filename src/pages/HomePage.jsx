@@ -8,6 +8,9 @@ const topics = [
   { icon: '🔄', title: 'useReducer', desc: 'Complex state management, Redux-like pattern', id: 'usereducer' },
   { icon: '🪝', title: 'Custom Hooks', desc: 'Reusable logic, composition pattern', id: 'customhooks' },
   { icon: '🚀', title: 'React 19 Features', desc: 'use(), Actions, Compiler, Server Components', id: 'react19' },
+  { icon: '📋', title: 'Array Methods', desc: 'map, filter, reduce, sort, flatMap, React patterns', id: 'array' },
+  { icon: '📘', title: 'TypeScript', desc: 'Types, Interface, Generics, Utility Types, React+TS', id: 'typescript' },
+  { icon: '🐳', title: 'Docker', desc: 'Container, Image, Dockerfile, Compose, CI/CD', id: 'docker' },
   { icon: '❓', title: 'Interview Q&A', desc: 'คำถามสัมภาษณ์ที่พบบ่อย พร้อมคำตอบ', id: 'interview' },
 ]
 
