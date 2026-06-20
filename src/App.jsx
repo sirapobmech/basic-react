@@ -16,6 +16,7 @@ import DockerPage from './pages/DockerPage'
 import TypeScriptPage from './pages/TypeScriptPage'
 import ArrayPage from './pages/ArrayPage'
 import SQLPage from './pages/SQLPage'
+import BuildDeployPage from './pages/BuildDeployPage'
 
 const navItems = [
   { id: 'home', label: 'หน้าหลัก', icon: '🏠' },
@@ -38,6 +39,7 @@ const navItems = [
   { section: 'TypeScript' },
   { id: 'typescript', label: 'TypeScript', icon: '📘' },
   { section: 'DevOps' },
+  { id: 'builddeploy', label: 'Build → Deploy → Browser', icon: '🚢' },
   { id: 'docker', label: 'Docker', icon: '🐳' },
   { section: 'สัมภาษณ์' },
   { id: 'interview', label: 'Interview Q&A', icon: '❓' },
@@ -56,6 +58,7 @@ const pages = {
   react19: React19Page,
   array: ArrayPage,
   sql: SQLPage,
+  builddeploy: BuildDeployPage,
   typescript: TypeScriptPage,
   docker: DockerPage,
   interview: InterviewQAPage,
