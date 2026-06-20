@@ -1,49 +1,49 @@
-import { useState } from 'react'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
 
-import HomePage from './pages/HomePage'
-import JSXPage from './pages/JSXPage'
-import PropsStatePage from './pages/PropsStatePage'
-import UseEffectPage from './pages/UseEffectPage'
-import UseContextPage from './pages/UseContextPage'
-import UseRefPage from './pages/UseRefPage'
-import MemoPage from './pages/MemoPage'
-import UseReducerPage from './pages/UseReducerPage'
-import CustomHooksPage from './pages/CustomHooksPage'
-import React19Page from './pages/React19Page'
-import InterviewQAPage from './pages/InterviewQAPage'
-import DockerPage from './pages/DockerPage'
-import TypeScriptPage from './pages/TypeScriptPage'
-import ArrayPage from './pages/ArrayPage'
-import SQLPage from './pages/SQLPage'
-import BuildDeployPage from './pages/BuildDeployPage'
+import ArrayPage from "./pages/ArrayPage";
+import BuildDeployPage from "./pages/BuildDeployPage";
+import CustomHooksPage from "./pages/CustomHooksPage";
+import DockerPage from "./pages/DockerPage";
+import HomePage from "./pages/HomePage";
+import InterviewQAPage from "./pages/InterviewQAPage";
+import JSXPage from "./pages/JSXPage";
+import MemoPage from "./pages/MemoPage";
+import PropsStatePage from "./pages/PropsStatePage";
+import React19Page from "./pages/React19Page";
+import SQLPage from "./pages/SQLPage";
+import TypeScriptPage from "./pages/TypeScriptPage";
+import UseContextPage from "./pages/UseContextPage";
+import UseEffectPage from "./pages/UseEffectPage";
+import UseReducerPage from "./pages/UseReducerPage";
+import UseRefPage from "./pages/UseRefPage";
 
 const navItems = [
-  { id: 'home', label: 'หน้าหลัก', icon: '🏠' },
-  { section: 'พื้นฐาน' },
-  { id: 'jsx', label: 'JSX & Components', icon: '⚛️' },
-  { id: 'props', label: 'Props & State', icon: '📦' },
-  { section: 'Hooks' },
-  { id: 'useeffect', label: 'useEffect', icon: '🎣' },
-  { id: 'usecontext', label: 'useContext', icon: '🔗' },
-  { id: 'useref', label: 'useRef', icon: '📎' },
-  { id: 'memo', label: 'useMemo & useCallback', icon: '⚡' },
-  { id: 'usereducer', label: 'useReducer', icon: '🔄' },
-  { section: 'Advanced' },
-  { id: 'customhooks', label: 'Custom Hooks', icon: '🪝' },
-  { id: 'react19', label: 'React 19 Features', icon: '🚀' },
-  { section: 'JavaScript' },
-  { id: 'array', label: 'Array Methods', icon: '📋' },
-  { section: 'Database' },
-  { id: 'sql', label: 'SQL', icon: '🗄️' },
-  { section: 'TypeScript' },
-  { id: 'typescript', label: 'TypeScript', icon: '📘' },
-  { section: 'DevOps' },
-  { id: 'builddeploy', label: 'Build → Deploy → Browser', icon: '🚢' },
-  { id: 'docker', label: 'Docker', icon: '🐳' },
-  { section: 'สัมภาษณ์' },
-  { id: 'interview', label: 'Interview Q&A', icon: '❓' },
-]
+  { id: "home", label: "หน้าหลัก", icon: "🏠" },
+  { section: "พื้นฐาน" },
+  { id: "jsx", label: "JSX & Components", icon: "⚛️" },
+  { id: "props", label: "Props & State", icon: "📦" },
+  { section: "Hooks" },
+  { id: "useeffect", label: "useEffect", icon: "🎣" },
+  { id: "usecontext", label: "useContext", icon: "🔗" },
+  { id: "useref", label: "useRef", icon: "📎" },
+  { id: "memo", label: "useMemo & useCallback", icon: "⚡" },
+  { id: "usereducer", label: "useReducer", icon: "🔄" },
+  { section: "Advanced" },
+  { id: "customhooks", label: "Custom Hooks", icon: "🪝" },
+  { id: "react19", label: "React 19 Features", icon: "🚀" },
+  { section: "JavaScript" },
+  { id: "array", label: "Array Methods", icon: "📋" },
+  { section: "Database" },
+  { id: "sql", label: "SQL", icon: "🗄️" },
+  { section: "TypeScript" },
+  { id: "typescript", label: "TypeScript", icon: "📘" },
+  { section: "DevOps" },
+  { id: "builddeploy", label: "Build → Deploy → Browser", icon: "🚢" },
+  { id: "docker", label: "Docker", icon: "🐳" },
+  { section: "สัมภาษณ์" },
+  { id: "interview", label: "Interview Q&A", icon: "❓" },
+];
 
 const pages = {
   home: HomePage,
@@ -62,17 +62,17 @@ const pages = {
   typescript: TypeScriptPage,
   docker: DockerPage,
   interview: InterviewQAPage,
-}
+};
 
 export default function App() {
-  const [activePage, setActivePage] = useState('home')
+  const [activePage, setActivePage] = useState("home");
 
   const navigate = (id) => {
-    setActivePage(id)
-    window.scrollTo(0, 0)
-  }
+    setActivePage(id);
+    window.scrollTo(0, 0);
+  };
 
-  const ActivePage = pages[activePage] || HomePage
+  const ActivePage = pages[activePage] || HomePage;
 
   return (
     <div className="app">
@@ -81,24 +81,30 @@ export default function App() {
           <div className="sidebar-title">
             <span>⚛️</span> React Interview
           </div>
-          <div className="sidebar-subtitle">Frontend Developer Prep · React 19</div>
+          <div className="sidebar-subtitle">
+            Basic Web Developer Prep · React 19
+          </div>
         </div>
 
         <nav className="sidebar-nav">
           {navItems.map((item, i) => {
             if (item.section) {
-              return <div key={i} className="nav-section-label">{item.section}</div>
+              return (
+                <div key={i} className="nav-section-label">
+                  {item.section}
+                </div>
+              );
             }
             return (
               <div
                 key={item.id}
-                className={`nav-item ${activePage === item.id ? 'active' : ''}`}
+                className={`nav-item ${activePage === item.id ? "active" : ""}`}
                 onClick={() => navigate(item.id)}
               >
                 <span className="nav-icon">{item.icon}</span>
                 <span>{item.label}</span>
               </div>
-            )
+            );
           })}
         </nav>
       </aside>
@@ -107,5 +113,5 @@ export default function App() {
         <ActivePage onNavigate={navigate} />
       </main>
     </div>
-  )
+  );
 }
