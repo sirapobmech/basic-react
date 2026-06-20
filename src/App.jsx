@@ -82,7 +82,7 @@ export default function App() {
             <span>⚛️</span> React Interview
           </div>
           <div className="sidebar-subtitle">
-            Basic Web Developer Prep · React 19
+            Welcome to Basic Web Developer Prep · React
           </div>
         </div>
 
