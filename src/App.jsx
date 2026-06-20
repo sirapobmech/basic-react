@@ -15,6 +15,7 @@ import InterviewQAPage from './pages/InterviewQAPage'
 import DockerPage from './pages/DockerPage'
 import TypeScriptPage from './pages/TypeScriptPage'
 import ArrayPage from './pages/ArrayPage'
+import SQLPage from './pages/SQLPage'
 
 const navItems = [
   { id: 'home', label: 'หน้าหลัก', icon: '🏠' },
@@ -32,6 +33,8 @@ const navItems = [
   { id: 'react19', label: 'React 19 Features', icon: '🚀' },
   { section: 'JavaScript' },
   { id: 'array', label: 'Array Methods', icon: '📋' },
+  { section: 'Database' },
+  { id: 'sql', label: 'SQL', icon: '🗄️' },
   { section: 'TypeScript' },
   { id: 'typescript', label: 'TypeScript', icon: '📘' },
   { section: 'DevOps' },
@@ -52,6 +55,7 @@ const pages = {
   customhooks: CustomHooksPage,
   react19: React19Page,
   array: ArrayPage,
+  sql: SQLPage,
   typescript: TypeScriptPage,
   docker: DockerPage,
   interview: InterviewQAPage,

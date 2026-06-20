@@ -10,6 +10,7 @@ const topics = [
   { icon: '🚀', title: 'React 19 Features', desc: 'use(), Actions, Compiler, Server Components', id: 'react19' },
   { icon: '📋', title: 'Array Methods', desc: 'map, filter, reduce, sort, flatMap, React patterns', id: 'array' },
   { icon: '📘', title: 'TypeScript', desc: 'Types, Interface, Generics, Utility Types, React+TS', id: 'typescript' },
+  { icon: '🗄️', title: 'SQL', desc: 'SELECT, JOIN, GROUP BY, CTE, Window Functions, Index', id: 'sql' },
   { icon: '🐳', title: 'Docker', desc: 'Container, Image, Dockerfile, Compose, CI/CD', id: 'docker' },
   { icon: '❓', title: 'Interview Q&A', desc: 'คำถามสัมภาษณ์ที่พบบ่อย พร้อมคำตอบ', id: 'interview' },
 ]

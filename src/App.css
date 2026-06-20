@@ -157,6 +157,21 @@
   background: #1e2535;
 }
 
+.section-desc {
+  color: #8892a4;
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+
+.section-desc code {
+  background: #1e2535;
+  color: #7dd3fc;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
 .sub-section-title {
   font-size: 14px;
   font-weight: 600;
