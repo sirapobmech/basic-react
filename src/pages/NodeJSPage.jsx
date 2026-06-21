@@ -16,27 +16,90 @@ const server = http.createServer((req, res) => {
 server.listen(3000)
 // เปิด browser ไปที่ localhost:3000 → เห็น Hello World`
 
-const eventLoopCode = `// Event Loop — หัวใจของ Node.js
+const blockingCode = `// ❌ Blocking — PHP / Python แบบดั้งเดิม
+// แต่ละ request ต้องรอคิว
 
-// Node.js รัน single thread (thread เดียว)
-// แต่รับ request หลายอันพร้อมกันได้ด้วย Event Loop
+// request 1 เข้ามา → อ่านไฟล์ 100ms → ตอบกลับ
+// request 2 ต้องรอ request 1 เสร็จก่อน
+// request 3 ต้องรอ request 1, 2 เสร็จก่อน
 
-// ❌ Blocking — thread ค้างรอ ทำอย่างอื่นไม่ได้
-const data = fs.readFileSync('file.txt')  // หยุดรอจนอ่านเสร็จ
+// ถ้ามี 100 request พร้อมกัน → คนสุดท้ายรอ 10 วินาที
+
+// Node.js แบบ Blocking (readFileSync) — มีปัญหาเหมือนกัน
+const data = fs.readFileSync('bigfile.txt')  // หยุดรอ 500ms
 console.log(data)
-// ระหว่างรอ request อื่นเข้ามาก็ต้องรอด้วย
+// ระหว่าง 500ms นั้น request อื่นเข้ามาก็ต้องค้างรอหมด`
 
-// ✅ Non-blocking — ส่งงานไปทำแล้วทำอย่างอื่นต่อ
-fs.readFile('file.txt', (err, data) => {
-  console.log(data)  // callback รันเมื่ออ่านเสร็จ
+const nonBlockingCode = `// ✅ Non-blocking — Node.js
+// ส่งงานไปทำข้างหลัง แล้วทำอย่างอื่นต่อได้เลย
+
+console.log('1. รับ request มา')
+
+fs.readFile('bigfile.txt', (err, data) => {
+  // callback นี้จะรันเมื่ออ่านเสร็จ (500ms ต่อมา)
+  console.log('3. อ่านไฟล์เสร็จแล้ว')
 })
-// ระหว่างรอ Node.js รับ request อื่นได้เลย
 
-// ✅ async/await — เขียนง่ายกว่า callback
-async function readFile() {
-  const data = await fs.promises.readFile('file.txt')
-  console.log(data)
+// Node.js ไม่รอ readFile — วิ่งต่อได้เลย
+console.log('2. รับ request อื่นระหว่างรอได้เลย')
+
+// Output:
+// 1. รับ request มา
+// 2. รับ request อื่นระหว่างรอได้เลย
+// 3. อ่านไฟล์เสร็จแล้ว  ← มาทีหลัง`
+
+const asyncAwaitCode = `// async/await — เขียนง่ายกว่า callback แต่ยัง non-blocking
+
+// แบบ callback — อ่านยากเมื่อซ้อนหลายชั้น (Callback Hell)
+fs.readFile('a.txt', (err, a) => {
+  fs.readFile('b.txt', (err, b) => {
+    fs.readFile('c.txt', (err, c) => {
+      console.log(a, b, c)  // ซ้อน 3 ชั้น อ่านยาก
+    })
+  })
+})
+
+// async/await — อ่านง่ายเหมือน synchronous แต่ยัง non-blocking
+async function readFiles() {
+  const a = await fs.promises.readFile('a.txt')
+  const b = await fs.promises.readFile('b.txt')
+  const c = await fs.promises.readFile('c.txt')
+  console.log(a, b, c)
+}
+
+// อ่านพร้อมกันทั้งหมด (เร็วกว่า)
+async function readAllAtOnce() {
+  const [a, b, c] = await Promise.all([
+    fs.promises.readFile('a.txt'),
+    fs.promises.readFile('b.txt'),
+    fs.promises.readFile('c.txt'),
+  ])
+  console.log(a, b, c)
 }`
+
+const eventLoopCode = `// Event Loop ทำงานยังไง
+
+// Node.js มี thread เดียว แต่มี "คิว" ไว้เก็บงานที่รอ
+
+// สมมติมี 3 request เข้ามาพร้อมกัน
+
+// request A: ต้องอ่านไฟล์ใช้เวลา 300ms
+// request B: ต้องอ่านไฟล์ใช้เวลา 100ms
+// request C: คำนวณเลข ไม่ต้อง I/O
+
+// Event Loop ทำงาน:
+// t=0ms   รับ A → ส่งให้ OS อ่านไฟล์ → ไปรับ B
+// t=0ms   รับ B → ส่งให้ OS อ่านไฟล์ → ไปรับ C
+// t=0ms   รับ C → คำนวณเสร็จ → ตอบกลับ C ทันที
+// t=100ms OS อ่านไฟล์ B เสร็จ → ตอบกลับ B
+// t=300ms OS อ่านไฟล์ A เสร็จ → ตอบกลับ A
+
+// รวมเวลา: 300ms (ไม่ใช่ 300+100 = 400ms)
+// เพราะ A และ B อ่านพร้อมกัน ไม่ได้รอคิว
+
+// เปรียบเหมือนพนักงานเสิร์ฟ 1 คน
+// รับออเดอร์โต๊ะ 1 → ส่งครัว → รับออเดอร์โต๊ะ 2 → ส่งครัว
+// ไม่ได้ยืนรอครัวทำอาหารโต๊ะ 1 เสร็จก่อน`
 
 const expressBasicCode = `// Express — framework ยอดนิยมสำหรับทำ API
 
@@ -314,9 +377,30 @@ export default function NodeJSPage() {
       <div className="section">
         <div className="section-title">Event Loop — Non-blocking I/O</div>
         <p className="section-desc">
-          Node.js รัน thread เดียว แต่รับ request ได้เยอะเพราะงาน I/O
-          (อ่านไฟล์, query DB) ถูกส่งไปทำข้างหลัง ไม่บล็อก thread หลัก
+          Node.js รัน thread เดียว แต่รับ request พร้อมกันได้เยอะ
+          เพราะงาน I/O (อ่านไฟล์, query DB, เรียก API) จะถูกส่งให้ OS ทำแทน
+          Node.js ไม่รอ — วิ่งรับ request ถัดไปได้เลย
         </p>
+
+        <div className="sub-section-title">ปัญหาของ Blocking</div>
+        <CodeBlock code={blockingCode} lang="javascript" />
+
+        <div className="sub-section-title">Non-blocking แก้ยังไง</div>
+        <CodeBlock code={nonBlockingCode} lang="javascript" />
+
+        <div className="callout callout-tip">
+          <span className="callout-icon">💡</span>
+          <span>
+            สังเกตว่า output ไม่ได้เรียงตามลำดับที่เขียน —
+            เพราะ Node.js ไม่รอ <code>readFile</code> แต่วิ่งต่อไปก่อน
+            แล้วค่อยกลับมารัน callback ทีหลังเมื่อเสร็จ
+          </span>
+        </div>
+
+        <div className="sub-section-title">async/await — เขียนง่ายขึ้น</div>
+        <CodeBlock code={asyncAwaitCode} lang="javascript" />
+
+        <div className="sub-section-title">Event Loop ภาพรวม</div>
         <CodeBlock code={eventLoopCode} lang="javascript" />
       </div>
 
