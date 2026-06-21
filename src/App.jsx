@@ -12,6 +12,7 @@ import MemoPage from "./pages/MemoPage";
 import PropsStatePage from "./pages/PropsStatePage";
 import React19Page from "./pages/React19Page";
 import SQLPage from "./pages/SQLPage";
+import NodeJSPage from "./pages/NodeJSPage";
 import TypeScriptPage from "./pages/TypeScriptPage";
 import UseContextPage from "./pages/UseContextPage";
 import UseEffectPage from "./pages/UseEffectPage";
@@ -34,6 +35,8 @@ const navItems = [
   { id: "react19", label: "React 19 Features", icon: "🚀" },
   { section: "JavaScript" },
   { id: "array", label: "Array Methods", icon: "📋" },
+  { section: "Backend" },
+  { id: "nodejs", label: "Node.js", icon: "🟩" },
   { section: "Database" },
   { id: "sql", label: "SQL", icon: "🗄️" },
   { section: "TypeScript" },
@@ -57,6 +60,7 @@ const pages = {
   customhooks: CustomHooksPage,
   react19: React19Page,
   array: ArrayPage,
+  nodejs: NodeJSPage,
   sql: SQLPage,
   builddeploy: BuildDeployPage,
   typescript: TypeScriptPage,

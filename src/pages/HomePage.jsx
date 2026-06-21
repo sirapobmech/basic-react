@@ -10,6 +10,7 @@ const topics = [
   { icon: '🚀', title: 'React 19 Features', desc: 'use(), Actions, Compiler, Server Components', id: 'react19' },
   { icon: '📋', title: 'Array Methods', desc: 'map, filter, reduce, sort, flatMap, React patterns', id: 'array' },
   { icon: '📘', title: 'TypeScript', desc: 'Types, Interface, Generics, Utility Types, React+TS', id: 'typescript' },
+  { icon: '🟩', title: 'Node.js', desc: 'Express, REST API, Middleware, JWT, Error Handling', id: 'nodejs' },
   { icon: '🗄️', title: 'SQL', desc: 'SELECT, JOIN, GROUP BY, CTE, Window Functions, Index', id: 'sql' },
   { icon: '🚢', title: 'Build → Deploy → Browser', desc: 'JSX compile, bundle, optimize, deploy, Virtual DOM, re-render', id: 'builddeploy' },
   { icon: '🐳', title: 'Docker', desc: 'Container, Image, Dockerfile, Compose, CI/CD', id: 'docker' },
