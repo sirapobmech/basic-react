@@ -9,6 +9,7 @@ npm run dev      # Start dev server (Vite HMR)
 npm run build    # Build to dist/
 npm run preview  # Preview production build locally
 npm run lint     # ESLint check
+npm run deploy   # Build + push dist/ to gh-pages branch (manual deploy)
 ```
 
 No test suite is configured.
@@ -36,7 +37,11 @@ Single-page app with no router — navigation is pure React state in `App.jsx`. 
 
 ## Deployment
 
-GitHub Actions (`.github/workflows/deploy.yml`) auto-deploys to GitHub Pages on every push to `main` using `peaceiris/actions-gh-pages`. The `base` in `vite.config.js` is set to `'/'`.
+GitHub Actions (`.github/workflows/deploy.yml`) auto-deploys to GitHub Pages on every push to `main` using `peaceiris/actions-gh-pages`. The `base` in `vite.config.js` is set to `'/basic-react/'` to match the GitHub Pages subdirectory path.
+
+Manual deploy: `npm run deploy` (uses `gh-pages` package to push `dist/` to `gh-pages` branch directly).
+
+Live URL: `https://sirapobmech.github.io/basic-react/`
 
 ## Stack
 
