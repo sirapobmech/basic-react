@@ -304,6 +304,62 @@ app.get('/me', authenticate, (req, res) => {
   res.json(req.user)
 })`
 
+const authDiffCode = `// Authentication — ตรวจว่าคุณเป็นใคร
+// Authorization  — ตรวจว่าคุณทำอะไรได้บ้าง
+
+// 1. Authentication Middleware — ตรวจ token ว่าถูกต้องไหม
+function authenticate(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  if (!token) return res.status(401).json({ error: 'กรุณา login ก่อน' })
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET)
+    // req.user = { id: 42, name: 'สมชาย', role: 'editor' }
+    next()
+  } catch {
+    res.status(401).json({ error: 'Token ไม่ถูกต้อง' })
+  }
+}
+
+// 2. Authorization Middleware — ตรวจว่า role มีสิทธิ์ไหม
+function authorize(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'ไม่มีสิทธิ์ทำสิ่งนี้' })
+    }
+    next()
+  }
+}
+
+// ใช้งาน — ลำดับสำคัญ: authenticate ก่อนเสมอ แล้วค่อย authorize
+app.delete('/users/:id',
+  authenticate,              // 1. รู้ก่อนว่าใคร
+  authorize('admin'),        // 2. เช็คว่า admin ไหม
+  deleteUser                 // 3. ถึงจะทำได้
+)
+
+app.patch('/posts/:id',
+  authenticate,
+  authorize('admin', 'editor'),   // admin หรือ editor ทำได้
+  updatePost
+)`
+
+const authErrorCode = `// Error ที่ได้ต่างกัน
+
+// 401 Unauthorized — ไม่รู้ว่าเป็นใคร (Authentication ล้มเหลว)
+// เกิดเมื่อ: ไม่มี token, token หมดอายุ, token ผิด
+res.status(401).json({ error: 'กรุณา login ก่อน' })
+
+// 403 Forbidden — รู้ว่าเป็นใคร แต่ทำไม่ได้ (Authorization ล้มเหลว)
+// เกิดเมื่อ: login แล้ว แต่ไม่มีสิทธิ์
+res.status(403).json({ error: 'ไม่มีสิทธิ์ทำสิ่งนี้' })
+
+// ตัวอย่าง:
+// user ทั่วไป พยายามลบ post คนอื่น
+// → authenticate ผ่าน (รู้ว่าเป็นใคร)
+// → authorize ไม่ผ่าน (role ไม่ใช่ admin)
+// → 403 Forbidden`
+
 const qaItems = [
   {
     q: 'Node.js คืออะไร ต่างจาก Browser JavaScript ยังไง?',
@@ -342,6 +398,15 @@ const qaItems = [
     bcrypt hash password เป็น string ที่ย้อนกลับไม่ได้<br>
     ตอนล็อกอิน bcrypt เปรียบ password ที่พิมพ์กับ hash ที่เก็บไว้<br><br>
     แม้ DB โดน hack — ได้แค่ hash ไม่สามารถรู้ password จริงได้`
+  },
+  {
+    q: 'Authentication กับ Authorization ต่างกันอย่างไร?',
+    a: `<strong>Authentication</strong> — ตรวจว่าคุณเป็นใคร เช่น login, ตรวจ JWT token<br>
+    <strong>Authorization</strong> — ตรวจว่าคุณมีสิทธิ์ทำสิ่งนั้นไหม เช่น role admin เท่านั้นลบได้<br><br>
+    ต้องผ่าน Authentication ก่อนเสมอ เพราะถ้าไม่รู้ว่าเป็นใคร จะตรวจสิทธิ์ไม่ได้<br><br>
+    <strong>Error ที่ได้:</strong><br>
+    401 Unauthorized → Authentication ล้มเหลว (ยังไม่ได้ login)<br>
+    403 Forbidden → Authorization ล้มเหลว (login แล้วแต่ไม่มีสิทธิ์)`
   },
   {
     q: 'PUT กับ PATCH ต่างกันยังไง?',
@@ -465,6 +530,29 @@ export default function NodeJSPage() {
           client ส่ง token มาทุก request แทนการ login ซ้ำ
         </p>
         <CodeBlock code={jwtCode} lang="javascript" />
+      </div>
+
+      <div className="section">
+        <div className="section-title">Authentication vs Authorization</div>
+        <p className="section-desc">
+          Authentication คือ <strong>ตรวจว่าคุณเป็นใคร</strong> (login, ตรวจ token) —
+          Authorization คือ <strong>ตรวจว่าคุณทำอะไรได้บ้าง</strong> (role, permission)
+          ต้องผ่าน Authentication ก่อนเสมอ ถึงจะทำ Authorization ได้
+        </p>
+
+        <div className="callout callout-info">
+          <span className="callout-icon">💡</span>
+          <span>
+            <strong>จำง่าย:</strong> Authentication = ยืนยันตัวตน (เป็นใคร) &nbsp;·&nbsp;
+            Authorization = ยืนยันสิทธิ์ (ทำได้ไหม)
+          </span>
+        </div>
+
+        <div className="sub-section-title">Middleware แยกหน้าที่ชัดเจน</div>
+        <CodeBlock code={authDiffCode} lang="javascript" />
+
+        <div className="sub-section-title">Error ที่ได้กลับมาต่างกัน</div>
+        <CodeBlock code={authErrorCode} lang="javascript" />
       </div>
 
       <div className="section">

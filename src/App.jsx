@@ -18,6 +18,7 @@ import UseContextPage from "./pages/UseContextPage";
 import UseEffectPage from "./pages/UseEffectPage";
 import UseReducerPage from "./pages/UseReducerPage";
 import UseRefPage from "./pages/UseRefPage";
+import VuePage from "./pages/VuePage";
 
 const navItems = [
   { id: "home", label: "หน้าหลัก", icon: "🏠" },
@@ -44,6 +45,8 @@ const navItems = [
   { section: "DevOps" },
   { id: "builddeploy", label: "Build → Deploy → Browser", icon: "🚢" },
   { id: "docker", label: "Docker", icon: "🐳" },
+  { section: "Vue.js" },
+  { id: "vue", label: "Vue 3", icon: "💚" },
   { section: "สัมภาษณ์" },
   { id: "interview", label: "Interview Q&A", icon: "❓" },
 ];
@@ -65,6 +68,7 @@ const pages = {
   builddeploy: BuildDeployPage,
   typescript: TypeScriptPage,
   docker: DockerPage,
+  vue: VuePage,
   interview: InterviewQAPage,
 };
 
