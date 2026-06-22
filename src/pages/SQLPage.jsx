@@ -22,6 +22,121 @@ CREATE TABLE orders (
   created_at DATE
 );`
 
+const dmlCode = `-- INSERT — เพิ่มข้อมูล
+INSERT INTO users (name, email, age, dept_id)
+VALUES ('Alice', 'alice@test.com', 28, 1);
+
+-- เพิ่มหลายแถวพร้อมกัน
+INSERT INTO users (name, email, age)
+VALUES
+  ('Bob',   'bob@test.com',   25),
+  ('Carol', 'carol@test.com', 30);
+
+-- INSERT แล้วได้แถวที่เพิ่งสร้างกลับมา (PostgreSQL)
+INSERT INTO users (name, email) VALUES ('Dave', 'dave@test.com')
+RETURNING *;
+
+-- UPDATE — แก้ไขข้อมูล
+UPDATE users SET age = 29 WHERE id = 1;
+
+-- แก้หลายคอลัมน์พร้อมกัน
+UPDATE users
+SET age = 29, dept_id = 2
+WHERE id = 1;
+
+-- ⚠️ ถ้าลืม WHERE — แก้ทุกแถวในตาราง!
+UPDATE users SET age = 0;  -- อันตราย
+
+-- DELETE — ลบข้อมูล
+DELETE FROM users WHERE id = 1;
+
+-- ⚠️ ถ้าลืม WHERE — ลบทุกแถว!
+DELETE FROM users;  -- อันตราย
+
+-- ลบแบบมีเงื่อนไขซับซ้อน
+DELETE FROM orders
+WHERE created_at < '2023-01-01' AND amount < 100;`
+
+const relationshipCode = `-- Database Relationship — ความสัมพันธ์ระหว่างตาราง
+
+-- ONE-TO-MANY: user คนเดียวมีหลาย order
+-- กำหนดด้วย FOREIGN KEY
+CREATE TABLE users (
+  id    SERIAL PRIMARY KEY,
+  name  VARCHAR(100)
+);
+
+CREATE TABLE orders (
+  id      SERIAL PRIMARY KEY,
+  amount  DECIMAL(10,2),
+  user_id INT REFERENCES users(id)  -- foreign key ชี้ไปที่ users
+  -- ON DELETE CASCADE → ถ้าลบ user ให้ลบ order ของเขาด้วย
+  -- ON DELETE SET NULL → ถ้าลบ user ให้ set user_id = NULL
+);
+
+-- ดึงข้อมูลรวมกัน
+SELECT u.name, o.amount
+FROM users u
+JOIN orders o ON u.id = o.user_id;
+
+-- -------------------------------------------
+-- MANY-TO-MANY: student เรียนได้หลาย course
+--               course มีได้หลาย student
+-- ต้องมี Junction Table กลาง
+
+CREATE TABLE students (id SERIAL PRIMARY KEY, name VARCHAR(100));
+CREATE TABLE courses  (id SERIAL PRIMARY KEY, name VARCHAR(100));
+
+CREATE TABLE student_courses (     -- Junction Table
+  student_id INT REFERENCES students(id),
+  course_id  INT REFERENCES courses(id),
+  enrolled_at DATE DEFAULT NOW(),
+  PRIMARY KEY (student_id, course_id)  -- ไม่ให้ลงซ้ำ
+);
+
+-- ดึง course ทั้งหมดของ student id=1
+SELECT c.name
+FROM courses c
+JOIN student_courses sc ON c.id = sc.course_id
+WHERE sc.student_id = 1;`
+
+const nPlusOneCode = `-- N+1 Problem — query เกินความจำเป็น เกิดบ่อยมากกับ ORM
+
+-- โจทย์: ดึง users ทั้งหมดพร้อม orders ของแต่ละคน
+
+-- ❌ N+1 Problem
+-- 1 query ดึง users ทั้งหมด
+SELECT * FROM users;  -- ได้ 100 คน
+
+-- แล้ว loop ดึง orders ทีละคน = 100 queries เพิ่ม!
+SELECT * FROM orders WHERE user_id = 1;
+SELECT * FROM orders WHERE user_id = 2;
+SELECT * FROM orders WHERE user_id = 3;
+-- ... 100 ครั้ง
+-- รวม: 1 + 100 = 101 queries ← ช้ามาก
+
+-- ✅ แก้ด้วย JOIN — query เดียวได้ทุกอย่าง
+SELECT u.id, u.name, o.id AS order_id, o.amount
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id;
+-- 1 query เท่านั้น
+
+-- ✅ แก้ใน Prisma ด้วย include
+const users = await prisma.user.findMany({
+  include: { orders: true }  -- Prisma JOIN ให้อัตโนมัติ
+})
+-- 1 query เท่านั้น (ไม่ใช่ loop)
+
+-- ✅ แก้ใน Prisma ด้วย select เฉพาะที่ต้องการ
+const users = await prisma.user.findMany({
+  select: {
+    name: true,
+    orders: {
+      select: { amount: true }
+    }
+  }
+})`
+
 const selectWhereCode = `-- ดึงทุกคอลัมน์
 SELECT * FROM users;
 
@@ -220,6 +335,108 @@ BEGIN;
   -- ระบบล่ม หรือ error อะไรก็ตาม
 ROLLBACK;  -- ยกเลิกทุกอย่าง → เงิน A ไม่หายไป`
 
+const dbDiffSyntaxCode = `-- ความแตกต่างที่เจอบ่อย
+
+-- Auto Increment Primary Key
+-- PostgreSQL
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,        -- หรือ BIGSERIAL สำหรับตัวเลขใหญ่
+  name VARCHAR(100)
+);
+
+-- MySQL
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100)
+);
+
+-- SQLite
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT
+);
+
+-- -----------------------------------------------
+-- ดึง N แถวล่าสุด
+-- PostgreSQL / MySQL / SQLite
+SELECT * FROM orders ORDER BY created_at DESC LIMIT 5;
+
+-- SQL Server
+SELECT TOP 5 * FROM orders ORDER BY created_at DESC;
+
+-- -----------------------------------------------
+-- String Concatenation
+-- PostgreSQL / SQLite
+SELECT first_name || ' ' || last_name AS full_name FROM users;
+
+-- MySQL / SQL Server
+SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM users;
+
+-- -----------------------------------------------
+-- ตรวจสอบวันที่ปัจจุบัน
+-- PostgreSQL
+SELECT NOW();              -- timestamp
+SELECT CURRENT_DATE;       -- date เท่านั้น
+
+-- MySQL
+SELECT NOW();
+SELECT CURDATE();
+
+-- SQLite
+SELECT datetime('now');
+SELECT date('now');`
+
+const sqlInjectionCode = `-- SQL Injection คือการที่ hacker แทรก SQL เข้ามาใน query
+
+-- สมมติ login form — รับ email กับ password จาก user
+-- แล้วนำไปต่อใน SQL ตรงๆ
+
+-- ❌ อันตราย — ต่อ string ตรงๆ
+const sql = "SELECT * FROM users WHERE email = '" + email + "'"
+
+-- ถ้า hacker พิมพ์ email = ' OR '1'='1
+-- SQL กลายเป็น:
+SELECT * FROM users WHERE email = '' OR '1'='1'
+-- '1'='1' เป็นจริงเสมอ → ได้ user ทุกคน → login ได้โดยไม่รู้ password ❌
+
+-- ยิ่งร้ายกว่านั้น ถ้าพิมพ์ email = '; DROP TABLE users; --
+-- SQL กลายเป็น:
+SELECT * FROM users WHERE email = ''; DROP TABLE users; --'
+-- ตาราง users ถูกลบทั้งหมด ❌
+
+-- ✅ แก้ด้วย Placeholder — library จัดการ escape ให้
+db.query('SELECT * FROM users WHERE email = $1', [email])
+-- ไม่ว่า email จะมีค่าอะไร จะถูกแปลงเป็น string ธรรมดาเสมอ
+-- ไม่มีทางรันเป็น SQL ได้
+
+-- Prisma ปลอดภัยอัตโนมัติ — ไม่มี raw string ให้ inject
+prisma.user.findUnique({ where: { email } })  // ✅ ปลอดภัยเสมอ`
+
+const dbNodejsCode = `// เชื่อม Node.js กับแต่ละ Database
+
+// PostgreSQL — ใช้ library 'pg'
+import pg from 'pg'
+const db = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+const result = await db.query('SELECT * FROM users WHERE id = $1', [42])
+// $1, $2, $3 — placeholder ป้องกัน SQL injection
+
+// MySQL — ใช้ library 'mysql2'
+import mysql from 'mysql2/promise'
+const pool = mysql.createPool({ uri: process.env.DATABASE_URL })
+const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [42])
+// ? — placeholder ของ MySQL
+
+// SQLite — ใช้ library 'better-sqlite3'
+import Database from 'better-sqlite3'
+const db = new Database('myapp.db')       // ไฟล์ .db บนเครื่อง
+const users = db.prepare('SELECT * FROM users WHERE id = ?').all(42)
+// Synchronous — ไม่ต้อง await
+
+// Prisma — เขียน code เหมือนกันทุก DB แค่เปลี่ยน provider ใน schema
+// schema.prisma:
+//   provider = "postgresql"  หรือ "mysql"  หรือ "sqlite"
+const users = await prisma.user.findMany()  // code ไม่เปลี่ยน`
+
 const qaItems = [
   {
     q: 'WHERE กับ HAVING ต่างกันอย่างไร?',
@@ -288,6 +505,40 @@ export default function SQLPage() {
         <div className="section-title">Schema ตัวอย่าง</div>
         <p className="section-desc">ใช้ 3 ตารางนี้เป็น reference ตลอดหน้า — <code>users</code> เชื่อมกับ <code>departments</code> ผ่าน <code>dept_id</code> และเชื่อมกับ <code>orders</code> ผ่าน <code>user_id</code></p>
         <CodeBlock code={schemaCode} lang="sql" />
+      </div>
+
+      <div className="section">
+        <div className="section-title">INSERT / UPDATE / DELETE</div>
+        <p className="section-desc">
+          DML (Data Manipulation Language) — คำสั่งจัดการข้อมูลในตาราง
+          ต้องระวัง UPDATE และ DELETE ที่ไม่มี WHERE จะกระทบทุกแถวในตาราง
+        </p>
+        <CodeBlock code={dmlCode} lang="sql" />
+      </div>
+
+      <div className="section">
+        <div className="section-title">Database Relationship</div>
+        <p className="section-desc">
+          ความสัมพันธ์ระหว่างตารางมี 2 แบบหลัก — One-to-Many ใช้ Foreign Key,
+          Many-to-Many ต้องมี Junction Table กลาง
+        </p>
+        <CodeBlock code={relationshipCode} lang="sql" />
+      </div>
+
+      <div className="section">
+        <div className="section-title">N+1 Problem</div>
+        <p className="section-desc">
+          N+1 เกิดเมื่อ query ข้อมูล N รายการ แล้ว loop ดึงข้อมูลอีก N ครั้ง
+          รวมเป็น N+1 queries — แก้ด้วย JOIN หรือ <code>include</code> ใน Prisma
+        </p>
+        <div className="callout callout-warning">
+          <span className="callout-icon">⚠️</span>
+          <span>
+            N+1 เป็นปัญหาที่ถามบ่อยในสัมภาษณ์ fullstack
+            และเป็นสาเหตุหลักที่ทำให้ API ช้าโดยไม่รู้ตัว
+          </span>
+        </div>
+        <CodeBlock code={nPlusOneCode} lang="sql" />
       </div>
 
       <div className="section">
@@ -370,6 +621,86 @@ export default function SQLPage() {
             <tr><td>Durability</td><td>COMMIT แล้วข้อมูลถาวร แม้ระบบล่ม</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <div className="section">
+        <div className="section-title">SQL ยอดนิยมในปัจจุบัน</div>
+        <p className="section-desc">
+          SQL ที่นิยมในตลาดงานมี 4 ตัวหลัก แต่ละตัวเหมาะกับงานต่างกัน
+          syntax ส่วนใหญ่เหมือนกัน มีต่างกันแค่บางส่วน
+        </p>
+        <table className="comparison-table">
+          <thead>
+            <tr>
+              <th>Database</th>
+              <th>เหมาะกับ</th>
+              <th>นิยมใช้กับ</th>
+              <th>ข้อเด่น</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>PostgreSQL</strong></td>
+              <td>Web app, Data ซับซ้อน</td>
+              <td>Node.js, Python, Rails</td>
+              <td>Feature ครบ, JSON support, open source</td>
+            </tr>
+            <tr>
+              <td><strong>MySQL</strong></td>
+              <td>Web app ทั่วไป</td>
+              <td>PHP, WordPress, Laravel</td>
+              <td>เร็ว, ใช้งานง่าย, host ราคาถูก</td>
+            </tr>
+            <tr>
+              <td><strong>SQLite</strong></td>
+              <td>App เล็ก, Mobile, Testing</td>
+              <td>React Native, Electron</td>
+              <td>ไม่ต้องติดตั้ง server, เก็บเป็นไฟล์เดียว</td>
+            </tr>
+            <tr>
+              <td><strong>SQL Server</strong></td>
+              <td>Enterprise, .NET</td>
+              <td>C#, .NET, Azure</td>
+              <td>integrate กับ Microsoft stack ได้ดี</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div className="callout callout-info" style={{ marginTop: '16px' }}>
+          <span className="callout-icon">💡</span>
+          <span>
+            ตลาดงาน Node.js ส่วนใหญ่ใช้ <strong>PostgreSQL</strong> —
+            ถ้าเรียนได้ตัวเดียวให้เรียน PostgreSQL ก่อน
+          </span>
+        </div>
+
+        <div className="sub-section-title">Syntax ที่ต่างกัน</div>
+        <p className="section-desc">
+          SQL มาตรฐาน (SELECT, JOIN, GROUP BY) เหมือนกันทุก database
+          ที่ต่างคือ syntax เฉพาะตัว เช่น auto increment, date function, string concat
+        </p>
+        <CodeBlock code={dbDiffSyntaxCode} lang="sql" />
+
+        <div className="sub-section-title">เชื่อมกับ Node.js</div>
+        <p className="section-desc">
+          แต่ละ database ใช้ library ต่างกัน แต่ถ้าใช้ Prisma
+          เขียน code เหมือนกันหมด แค่เปลี่ยน provider ใน schema
+        </p>
+        <CodeBlock code={dbNodejsCode} lang="javascript" />
+
+        <div className="sub-section-title">SQL Injection — ช่องโหว่ที่ต้องระวัง</div>
+        <p className="section-desc">
+          SQL Injection คือการที่ hacker แทรก SQL เข้าไปใน query ผ่าน input ของ user
+          แก้ได้ด้วยการใช้ placeholder (<code>$1</code>, <code>?</code>) แทนการต่อ string ตรงๆ
+        </p>
+        <div className="callout callout-warning">
+          <span className="callout-icon">⚠️</span>
+          <span>
+            ห้ามนำ input จาก user ต่อลงใน SQL string โดยตรงเด็ดขาด
+            ให้ใช้ placeholder หรือ ORM เสมอ
+          </span>
+        </div>
+        <CodeBlock code={sqlInjectionCode} lang="sql" />
       </div>
 
       <div className="section">

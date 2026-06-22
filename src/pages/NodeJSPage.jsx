@@ -410,6 +410,129 @@ app.use(cors({ ... }))
 app.use(express.json())
 // ... routes`
 
+const refreshTokenCode = `// Refresh Token — แก้ปัญหา JWT หมดอายุกลางคัน
+
+// ปัญหาของ JWT อย่างเดียว:
+// token อายุสั้น (15 นาที) → user ต้อง login บ่อย
+// token อายุยาว (7 วัน)   → ถ้า token หลุด hacker ใช้ได้นาน
+
+// ✅ แก้ด้วย 2 token
+// Access Token  — อายุสั้น 15 นาที ใช้เรียก API
+// Refresh Token — อายุยาว 30 วัน ใช้ขอ Access Token ใหม่
+
+// Login — ออก 2 token
+app.post('/login', async (req, res) => {
+  const user = await validateUser(req.body)
+
+  const accessToken = jwt.sign(
+    { userId: user.id },
+    process.env.JWT_SECRET,
+    { expiresIn: '15m' }    // หมดใน 15 นาที
+  )
+  const refreshToken = jwt.sign(
+    { userId: user.id },
+    process.env.REFRESH_SECRET,
+    { expiresIn: '30d' }    // หมดใน 30 วัน
+  )
+
+  // เก็บ refresh token ใน DB เพื่อ revoke ได้
+  await prisma.refreshToken.create({
+    data: { token: refreshToken, userId: user.id }
+  })
+
+  res.json({ accessToken, refreshToken })
+})
+
+// ขอ Access Token ใหม่
+app.post('/refresh', async (req, res) => {
+  const { refreshToken } = req.body
+
+  // ตรวจว่า refresh token ยังอยู่ใน DB (ไม่ถูก revoke)
+  const stored = await prisma.refreshToken.findUnique({
+    where: { token: refreshToken }
+  })
+  if (!stored) return res.status(401).json({ error: 'Invalid refresh token' })
+
+  try {
+    const payload = jwt.verify(refreshToken, process.env.REFRESH_SECRET)
+    const accessToken = jwt.sign(
+      { userId: payload.userId },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    )
+    res.json({ accessToken })
+  } catch {
+    res.status(401).json({ error: 'Refresh token expired' })
+  }
+})
+
+// Logout — ลบ refresh token ออกจาก DB
+app.post('/logout', authenticate, async (req, res) => {
+  const { refreshToken } = req.body
+  await prisma.refreshToken.delete({ where: { token: refreshToken } })
+  res.json({ message: 'Logged out' })
+})`
+
+const testingCode = `// Testing — ทดสอบ API ด้วย Jest + Supertest
+// npm install -D jest supertest @types/jest
+
+// ทดสอบ API endpoint โดยตรง ไม่ต้องรัน server จริง
+
+// tests/users.test.js
+import request from 'supertest'
+import app from '../app.js'        // import express app
+import { prisma } from '../prisma.js'
+
+// ล้างข้อมูลก่อนเริ่ม test แต่ละชุด
+beforeEach(async () => {
+  await prisma.user.deleteMany()
+})
+
+// ปิด DB connection หลัง test เสร็จ
+afterAll(async () => {
+  await prisma.$disconnect()
+})
+
+describe('POST /users', () => {
+  it('สร้าง user ใหม่ได้', async () => {
+    const res = await request(app)
+      .post('/users')
+      .send({ name: 'Alice', email: 'alice@test.com', password: '12345678' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.name).toBe('Alice')
+    expect(res.body.password).toBeUndefined()  // ไม่ส่ง password กลับ
+  })
+
+  it('email ซ้ำต้องได้ 400', async () => {
+    await prisma.user.create({ data: { name: 'Alice', email: 'alice@test.com' } })
+
+    const res = await request(app)
+      .post('/users')
+      .send({ name: 'Alice2', email: 'alice@test.com', password: '12345678' })
+
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('GET /users/:id', () => {
+  it('ดึง user ที่มีอยู่ได้', async () => {
+    const user = await prisma.user.create({
+      data: { name: 'Bob', email: 'bob@test.com' }
+    })
+
+    const res = await request(app).get(\`/users/\${user.id}\`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.name).toBe('Bob')
+  })
+
+  it('ไม่เจอ user ต้องได้ 404', async () => {
+    const res = await request(app).get('/users/99999')
+    expect(res.status).toBe(404)
+  })
+})`
+
 const corsCode = `// CORS — อนุญาตให้ frontend domain อื่นเรียก API ได้
 // ถ้าไม่ตั้ง CORS browser จะบล็อก request จาก frontend ทันที
 
@@ -962,6 +1085,15 @@ export default function NodeJSPage() {
       </div>
 
       <div className="section">
+        <div className="section-title">Refresh Token</div>
+        <p className="section-desc">
+          JWT อย่างเดียวมีปัญหา — อายุสั้น user ต้อง login บ่อย, อายุยาว token หลุดแล้วอันตราย
+          แก้ด้วย 2 token: Access Token อายุสั้น + Refresh Token อายุยาวไว้ขอ token ใหม่
+        </p>
+        <CodeBlock code={refreshTokenCode} lang="javascript" />
+      </div>
+
+      <div className="section">
         <div className="section-title">Authentication vs Authorization</div>
         <p className="section-desc">
           Authentication คือ <strong>ตรวจว่าคุณเป็นใคร</strong> (login, ตรวจ token) —
@@ -1028,6 +1160,15 @@ export default function NodeJSPage() {
           เวลารวมเท่ากับอันที่นานที่สุด ไม่ใช่ผลรวมทั้งหมด
         </p>
         <CodeBlock code={parallelQueryCode} lang="javascript" />
+      </div>
+
+      <div className="section">
+        <div className="section-title">Testing — Jest & Supertest</div>
+        <p className="section-desc">
+          ทดสอบ API endpoint โดยตรงโดยไม่ต้องรัน server จริง
+          Jest คือ test runner, Supertest ใช้ยิง HTTP request ไปที่ Express app
+        </p>
+        <CodeBlock code={testingCode} lang="javascript" />
       </div>
 
       <div className="section">
